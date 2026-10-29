@@ -112,3 +112,25 @@ html, body, #root {
   overflow-y: auto;
   overflow-x: hidden;
 }
+
+/* ── Request progress view ── */
+.wf-node-idle { opacity: 0.35; filter: grayscale(0.6); }
+.wf-node-done { opacity: 1; }
+.wf-node-waiting > div { animation: waiting-glow 1.6s ease-in-out infinite; border-radius: 12px; }
+.wf-node-rejected > div { box-shadow: 0 0 0 2px #f43f5e, 0 0 18px rgba(244,63,94,0.45); border-radius: 12px; }
+.react-flow__edge.wf-edge-idle .react-flow__edge-path { stroke: rgba(148,163,184,0.25) !important; }
+.react-flow__edge.wf-edge-taken .react-flow__edge-path { stroke: #22c55e !important; }
+
+@keyframes waiting-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(245,158,11,0.6), 0 0 10px rgba(245,158,11,0.3); }
+  50%      { box-shadow: 0 0 0 2px rgba(245,158,11,1), 0 0 24px rgba(245,158,11,0.6); }
+}
+
+/* Edge labels are clickable targets for editing conditions */
+.react-flow__edge-textwrapper { cursor: pointer; }
+.react-flow__edge.selected .react-flow__edge-text { fill: #e0e7ff !important; }
+
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+}

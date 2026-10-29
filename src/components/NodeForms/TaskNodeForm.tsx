@@ -62,7 +62,7 @@ export function TaskNodeForm({ data, onChange }: Props) {
           id={`${id}-assignee`}
           value={data.assignee}
           onChange={e => onChange({ assignee: e.target.value })}
-          placeholder="e.g. John Doe / HR Team"
+          placeholder="Email, name, role (hrbp) or blank = requester"
           style={inputStyle}
         />
       </div>

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -6,6 +6,7 @@ import {
   MiniMap,
   BackgroundVariant,
   type NodeMouseHandler,
+  type EdgeMouseHandler,
   type ReactFlowInstance,
 } from '@xyflow/react';
 import type { WorkflowNode, WorkflowEdge } from '../../types/workflow.types';
@@ -34,6 +35,10 @@ interface WorkflowCanvasProps {
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
   onNodeSelect: (id: string | null) => void;
+  onEdgeSelect: (id: string | null) => void;
+  selectedEdgeId: string | null;
+  onDeleteEdge: (id: string) => void;
+  fitKey?: number;
   onAddNode: (type: NodeType, position: { x: number; y: number }) => void;
   onDeleteNode: (id: string) => void;
 }
@@ -47,10 +52,21 @@ export function WorkflowCanvas({
   onEdgesChange,
   onConnect,
   onNodeSelect,
+  onEdgeSelect,
+  selectedEdgeId,
+  onDeleteEdge,
+  fitKey = 0,
   onAddNode,
   onDeleteNode,
 }: WorkflowCanvasProps) {
   const rfInstance = useRef<ReactFlowInstance<WorkflowNode, WorkflowEdge> | null>(null);
+
+  // Re-fit the viewport after a workflow is opened or imported.
+  useEffect(() => {
+    if (!fitKey) return;
+    const id = requestAnimationFrame(() => rfInstance.current?.fitView({ padding: 0.2, duration: 300 }));
+    return () => cancelAnimationFrame(id);
+  }, [fitKey]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_evt, node) => {
@@ -59,9 +75,17 @@ export function WorkflowCanvas({
     [onNodeSelect]
   );
 
+  const onEdgeClick: EdgeMouseHandler<WorkflowEdge> = useCallback(
+    (_evt, edge) => {
+      onEdgeSelect(edge.id);
+    },
+    [onEdgeSelect]
+  );
+
   const onPaneClick = useCallback(() => {
     onNodeSelect(null);
-  }, [onNodeSelect]);
+    onEdgeSelect(null);
+  }, [onNodeSelect, onEdgeSelect]);
 
   // Handle drop from sidebar
   const onDrop = useCallback(
@@ -87,11 +111,14 @@ export function WorkflowCanvas({
   // Delete key handler
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNodeId) {
-        onDeleteNode(selectedNodeId);
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        if (selectedNodeId) onDeleteNode(selectedNodeId);
+        else if (selectedEdgeId) onDeleteEdge(selectedEdgeId);
       }
     },
-    [selectedNodeId, onDeleteNode]
+    [selectedNodeId, selectedEdgeId, onDeleteNode, onDeleteEdge]
   );
 
   return (
@@ -109,11 +136,13 @@ export function WorkflowCanvas({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         onInit={instance => { rfInstance.current = instance; }}
         fitView
         fitViewOptions={{ padding: 0.3 }}
+        minZoom={0.2}
         deleteKeyCode={null} // we handle manually above
         proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{

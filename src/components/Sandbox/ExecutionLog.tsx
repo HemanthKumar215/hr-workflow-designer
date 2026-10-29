@@ -36,7 +36,7 @@ export function ExecutionLog({ steps }: Props) {
         const isLast = idx === steps.length - 1;
 
         return (
-          <div key={step.nodeId} style={{ display: 'flex', gap: 12, position: 'relative' }}>
+          <div key={`${step.nodeId}-${idx}`} style={{ display: 'flex', gap: 12, position: 'relative' }}>
             {/* Timeline line */}
             {!isLast && (
               <div style={{

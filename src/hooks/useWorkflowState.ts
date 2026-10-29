@@ -14,13 +14,39 @@ import { NODE_DEFAULTS } from '../types/node.types';
 let nodeCounter = 1;
 
 function generateId(type: NodeType): string {
-  return `${type}-${nodeCounter++}`;
+  return `${type}-${Date.now().toString(36)}-${nodeCounter++}`;
+}
+
+/** Visual styling for an edge label showing its branch condition. */
+export function conditionLabelProps(condition: string): Partial<WorkflowEdge> {
+  if (!condition) return { label: undefined };
+  const isReject = condition.includes('rejected');
+  const isElse = condition.trim().toLowerCase() === 'else';
+  const color = isReject ? '#fda4af' : isElse ? '#94a3b8' : '#fcd34d';
+  return {
+    label: condition,
+    labelStyle: { fill: color, fontSize: 11, fontWeight: 600, fontFamily: 'ui-monospace, monospace' },
+    labelBgStyle: { fill: '#161b27', stroke: 'rgba(255,255,255,0.12)' },
+    labelBgPadding: [6, 3] as [number, number],
+    labelBgBorderRadius: 5,
+  };
+}
+
+/** Re-apply label styling to edges loaded from a file or the server. */
+export function decorateEdges(edges: WorkflowEdge[]): WorkflowEdge[] {
+  return edges.map(e => {
+    const cond = String((e.data as { condition?: string } | undefined)?.condition ?? '');
+    return { ...e, ...conditionLabelProps(cond) };
+  });
 }
 
 export interface WorkflowState {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
   selectedNodeId: string | null;
+  selectedEdgeId: string | null;
+  /** Increments whenever a whole graph is loaded, so the canvas can re-fit the view. */
+  loadCount: number;
 }
 
 export interface WorkflowActions {
@@ -31,6 +57,9 @@ export interface WorkflowActions {
   deleteNode: (id: string) => void;
   updateNodeData: (id: string, data: Partial<NodeData>) => void;
   selectNode: (id: string | null) => void;
+  selectEdge: (id: string | null) => void;
+  updateEdgeCondition: (id: string, condition: string) => void;
+  deleteEdge: (id: string) => void;
   clearCanvas: () => void;
   setNodesAndEdges: (nodes: WorkflowNode[], edges: WorkflowEdge[]) => void;
 }
@@ -39,6 +68,8 @@ export function useWorkflowState(): WorkflowState & WorkflowActions {
   const [nodes, setNodes] = useState<WorkflowNode[]>([]);
   const [edges, setEdges] = useState<WorkflowEdge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [loadCount, setLoadCount] = useState(0);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes(nds => applyNodeChanges(changes, nds) as WorkflowNode[]),
@@ -93,19 +124,44 @@ export function useWorkflowState(): WorkflowState & WorkflowActions {
 
   const selectNode = useCallback((id: string | null) => {
     setSelectedNodeId(id);
+    if (id) setSelectedEdgeId(null);
+  }, []);
+
+  const selectEdge = useCallback((id: string | null) => {
+    setSelectedEdgeId(id);
+    if (id) setSelectedNodeId(null);
+  }, []);
+
+  const updateEdgeCondition = useCallback((id: string, condition: string) => {
+    const trimmed = condition.trim();
+    setEdges(eds =>
+      eds.map(e =>
+        e.id === id
+          ? { ...e, data: { ...(e.data ?? {}), condition: trimmed }, ...conditionLabelProps(trimmed) }
+          : e
+      )
+    );
+  }, []);
+
+  const deleteEdge = useCallback((id: string) => {
+    setEdges(eds => eds.filter(e => e.id !== id));
+    setSelectedEdgeId(prev => (prev === id ? null : prev));
   }, []);
 
   const clearCanvas = useCallback(() => {
     setNodes([]);
     setEdges([]);
     setSelectedNodeId(null);
+    setSelectedEdgeId(null);
   }, []);
 
   const setNodesAndEdges = useCallback(
     (newNodes: WorkflowNode[], newEdges: WorkflowEdge[]) => {
       setNodes(newNodes);
-      setEdges(newEdges);
+      setEdges(decorateEdges(newEdges));
+      setLoadCount(c => c + 1);
       setSelectedNodeId(null);
+      setSelectedEdgeId(null);
     },
     []
   );
@@ -114,6 +170,8 @@ export function useWorkflowState(): WorkflowState & WorkflowActions {
     nodes,
     edges,
     selectedNodeId,
+    selectedEdgeId,
+    loadCount,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -121,6 +179,9 @@ export function useWorkflowState(): WorkflowState & WorkflowActions {
     deleteNode,
     updateNodeData,
     selectNode,
+    selectEdge,
+    updateEdgeCondition,
+    deleteEdge,
     clearCanvas,
     setNodesAndEdges,
   };

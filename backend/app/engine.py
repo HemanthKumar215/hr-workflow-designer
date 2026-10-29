@@ -404,7 +404,12 @@ def simulate(graph_json: dict[str, Any], variables: dict[str, Any] | None = None
              decisions: dict[str, str] | None = None) -> dict[str, Any]:
     graph = Graph.from_json(graph_json)
     starts = graph.start_nodes()
-    ex = SimulationExecutor(graph, start_variables(graph, variables or {}), decisions)
+    vars_ = start_variables(graph, variables or {})
+    # Stand-in requester so {{requester_*}} templates render in the preview.
+    vars_.setdefault("requester_name", "Test User")
+    vars_.setdefault("requester_email", "test.user@example.com")
+    vars_.setdefault("requester_department", "Engineering")
+    ex = SimulationExecutor(graph, vars_, decisions)
     if starts:
         ex.run_from(starts[:1])
     if ex.failed:

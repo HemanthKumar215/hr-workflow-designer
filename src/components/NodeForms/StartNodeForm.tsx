@@ -42,7 +42,7 @@ export function StartNodeForm({ data, onChange }: Props) {
 
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={labelStyle}>Metadata (optional)</span>
+          <span style={labelStyle}>Request fields</span>
           <button onClick={addMetadata} style={addBtnStyle}>+ Add</button>
         </div>
         {data.metadata?.map(m => (
@@ -50,21 +50,25 @@ export function StartNodeForm({ data, onChange }: Props) {
             <input
               value={m.key}
               onChange={e => updateMetadata(m.id, 'key', e.target.value)}
-              placeholder="Key"
+              placeholder="Field (e.g. days)"
               style={{ ...inputStyle, flex: 1 }}
             />
             <input
               value={m.value}
               onChange={e => updateMetadata(m.id, 'value', e.target.value)}
-              placeholder="Value"
+              placeholder="Default"
               style={{ ...inputStyle, flex: 1 }}
             />
             <button onClick={() => removeMetadata(m.id)} style={removeBtnStyle}>✕</button>
           </div>
         ))}
         {(!data.metadata || data.metadata.length === 0) && (
-          <div style={{ fontSize: 11, color: '#334155', fontStyle: 'italic' }}>No metadata added</div>
+          <div style={{ fontSize: 11, color: '#334155', fontStyle: 'italic' }}>No fields added</div>
         )}
+        <div style={{ fontSize: 11, color: '#64748b', marginTop: 8, lineHeight: 1.6 }}>
+          These become the form people fill in when they submit a request. Use them in branch
+          conditions (<code>days &gt; 5</code>) and automation params (<code>{'{{days}}'}</code>).
+        </div>
       </div>
     </div>
   );

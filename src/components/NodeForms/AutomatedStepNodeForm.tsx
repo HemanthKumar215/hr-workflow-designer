@@ -71,6 +71,9 @@ export function AutomatedStepNodeForm({ data, onChange }: Props) {
               </div>
             ))}
           </div>
+          <div style={{ fontSize: 11, color: '#64748b', marginTop: 8 }}>
+            Tip: insert request values with <code>{'{{field}}'}</code>, e.g. <code>{'{{requester_email}}'}</code>.
+          </div>
         </div>
       )}
 

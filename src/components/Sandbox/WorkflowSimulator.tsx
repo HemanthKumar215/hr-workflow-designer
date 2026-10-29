@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { WorkflowNode, WorkflowEdge, SimulationResult, ValidationError } from '../../types/workflow.types';
-import { simulateWorkflow } from '../../services/api';
+import { isBackendEnabled, simulateWorkflow } from '../../services/api';
 import { validateWorkflow } from '../../utils/workflowValidator';
 import { exportWorkflowAsJSON, importWorkflowFromFile } from '../../utils/workflowSerializer';
 import { ExecutionLog } from './ExecutionLog';
@@ -18,6 +18,12 @@ export function WorkflowSimulator({ nodes, edges, onImport, onClear }: Props) {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [preflightErrors, setPreflightErrors] = useState<ValidationError[]>([]);
   const [activeTab, setActiveTab] = useState<'log' | 'json'>('log');
+  const [testVars, setTestVars] = useState<Record<string, string>>({});
+
+  // Request fields come from the Start node; the user can override them to test branches.
+  const startNode = nodes.find(n => n.data.type === 'start');
+  const fields = ((startNode?.data as { metadata?: { key: string; value: string }[] } | undefined)?.metadata ?? [])
+    .filter(m => m.key.trim());
 
   const handleSimulate = useCallback(async () => {
     // Pre-flight validation
@@ -36,7 +42,7 @@ export function WorkflowSimulator({ nodes, edges, onImport, onClear }: Props) {
     setIsOpen(true);
 
     try {
-      const res = await simulateWorkflow(nodes, edges);
+      const res = await simulateWorkflow(nodes, edges, testVars);
       setResult(res);
     } catch (err) {
       setResult({
@@ -48,7 +54,7 @@ export function WorkflowSimulator({ nodes, edges, onImport, onClear }: Props) {
     } finally {
       setIsRunning(false);
     }
-  }, [nodes, edges]);
+  }, [nodes, edges, testVars]);
 
   const handleExport = () => exportWorkflowAsJSON(nodes, edges, 'hr-workflow');
 
@@ -183,6 +189,38 @@ export function WorkflowSimulator({ nodes, edges, onImport, onClear }: Props) {
 
             {/* Content */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+              {isBackendEnabled && fields.length > 0 && (
+                <div style={{
+                  marginBottom: 16, padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}>
+                  <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
+                    Test request values
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}>
+                    {fields.map(f => (
+                      <label key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, color: '#64748b' }}>
+                        {f.key}
+                        <input
+                          value={testVars[f.key] ?? ''}
+                          placeholder={f.value || '—'}
+                          onChange={e => setTestVars(v => ({ ...v, [f.key]: e.target.value }))}
+                          style={{
+                            width: 130, background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6,
+                            padding: '5px 8px', color: '#f1f5f9', fontSize: 12, outline: 'none',
+                          }}
+                        />
+                      </label>
+                    ))}
+                    <button onClick={handleSimulate} disabled={isRunning} style={{ ...toolBtnStyle('#312e81'), color: '#c7d2fe' }}>
+                      ↻ Re-run
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#475569', marginTop: 8 }}>
+                    Change values to see which branches the engine takes. Approvals are assumed approved.
+                  </div>
+                </div>
+              )}
               {/* Validation errors */}
               {allErrors.length > 0 && (
                 <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>

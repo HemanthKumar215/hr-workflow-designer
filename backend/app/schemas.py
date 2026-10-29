@@ -1,7 +1,15 @@
-from datetime import datetime
-from typing import Any, Literal
+from datetime import datetime, timezone
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
+
+def _as_utc(value: datetime) -> datetime:
+    # SQLite returns naive datetimes; they are stored in UTC, so mark them as such.
+    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+
+UTCDateTime = Annotated[datetime, AfterValidator(_as_utc)]
 
 
 class ORM(BaseModel):
@@ -43,14 +51,14 @@ class WorkflowSummary(ORM):
     name: str
     description: str
     version: int
-    updated_at: datetime
+    updated_at: UTCDateTime
     node_count: int = 0
     form_fields: list[str] = Field(default_factory=list)
 
 
 class WorkflowOut(WorkflowSummary):
     graph: dict[str, Any]
-    created_at: datetime
+    created_at: UTCDateTime
 
 
 class ValidationIssue(BaseModel):
@@ -107,10 +115,10 @@ class ActionOut(ORM):
     assignee_user: UserOut | None
     decided_by: UserOut | None
     comment: str
-    due_at: datetime | None
+    due_at: UTCDateTime | None
     auto_approve_on_due: bool
-    created_at: datetime
-    decided_at: datetime | None
+    created_at: UTCDateTime
+    decided_at: UTCDateTime | None
 
 
 class EventOut(ORM):
@@ -121,7 +129,7 @@ class EventOut(ORM):
     message: str
     actor: UserOut | None
     data: dict[str, Any]
-    created_at: datetime
+    created_at: UTCDateTime
 
 
 class InstanceSummary(ORM):
@@ -132,9 +140,9 @@ class InstanceSummary(ORM):
     status: str
     started_by: UserOut
     variables: dict[str, Any]
-    created_at: datetime
-    updated_at: datetime
-    completed_at: datetime | None
+    created_at: UTCDateTime
+    updated_at: UTCDateTime
+    completed_at: UTCDateTime | None
 
 
 class InstanceOut(InstanceSummary):
