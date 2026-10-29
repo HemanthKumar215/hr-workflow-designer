@@ -1,5 +1,5 @@
 import type { NodeType } from '../../types/node.types';
-import { setDraggedNodeType } from './WorkflowCanvas';
+import { setDraggedNodeType } from '../../utils/dragState';
 
 interface NodeSidebarProps {
   onAddNode: (type: NodeType, position: { x: number; y: number }) => void;
@@ -63,6 +63,9 @@ const NODE_DEFS: NodeDefinition[] = [
   },
 ];
 
+// Click-to-add places nodes on a staggered diagonal so they don't overlap.
+let clickAddCount = 0;
+
 export function NodeSidebar({ onAddNode }: NodeSidebarProps) {
   const handleDragStart = (type: NodeType) => {
     setDraggedNodeType(type);
@@ -70,10 +73,8 @@ export function NodeSidebar({ onAddNode }: NodeSidebarProps) {
 
   const handleClickAdd = (type: NodeType) => {
     // Add to center-ish area when just clicking
-    onAddNode(type, {
-      x: 200 + Math.random() * 200,
-      y: 100 + Math.random() * 200,
-    });
+    const step = clickAddCount++ % 8;
+    onAddNode(type, { x: 200 + step * 40, y: 100 + step * 60 });
   };
 
   return (

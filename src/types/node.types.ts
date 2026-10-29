@@ -7,12 +7,14 @@ export interface KeyValuePair {
 }
 
 export interface StartNodeData {
+  [key: string]: unknown;
   type: 'start';
   title: string;
   metadata: KeyValuePair[];
 }
 
 export interface TaskNodeData {
+  [key: string]: unknown;
   type: 'task';
   title: string;
   description: string;
@@ -24,6 +26,7 @@ export interface TaskNodeData {
 export type ApproverRole = 'Manager' | 'HRBP' | 'Director';
 
 export interface ApprovalNodeData {
+  [key: string]: unknown;
   type: 'approval';
   title: string;
   approverRole: ApproverRole;
@@ -31,6 +34,7 @@ export interface ApprovalNodeData {
 }
 
 export interface AutomatedStepNodeData {
+  [key: string]: unknown;
   type: 'automated';
   title: string;
   actionId: string;
@@ -38,6 +42,7 @@ export interface AutomatedStepNodeData {
 }
 
 export interface EndNodeData {
+  [key: string]: unknown;
   type: 'end';
   endMessage: string;
   includeSummary: boolean;

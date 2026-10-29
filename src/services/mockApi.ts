@@ -15,10 +15,6 @@ const MOCK_AUTOMATIONS: AutomationAction[] = [
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-function isoNow(): string {
-  return new Date().toISOString();
-}
-
 function buildStepsFromGraph(nodes: WorkflowNode[], edges: WorkflowEdge[]): SimulationStep[] {
   // Topological ordering using BFS from start node
   const adj: Record<string, string[]> = {};
@@ -55,7 +51,7 @@ function buildStepsFromGraph(nodes: WorkflowNode[], edges: WorkflowEdge[]): Simu
       ?? id;
 
     let status: SimulationStep['status'] = 'completed';
-    let message = '';
+    let message: string;
 
     switch (data?.type) {
       case 'start':

@@ -9,7 +9,6 @@ export function useAutomations() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     fetchAutomations()
       .then(data => { if (!cancelled) setAutomations(data); })
       .catch(err => { if (!cancelled) setError(String(err)); })

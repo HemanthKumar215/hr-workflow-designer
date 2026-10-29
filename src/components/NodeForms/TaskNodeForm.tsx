@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { TaskNodeData, KeyValuePair } from '../../types/node.types';
+import type { TaskNodeData } from '../../types/node.types';
 
 interface Props {
   data: TaskNodeData;

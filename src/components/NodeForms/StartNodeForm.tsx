@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { StartNodeData, KeyValuePair } from '../../types/node.types';
+import type { StartNodeData } from '../../types/node.types';
 
 interface Props {
   data: StartNodeData;

@@ -6,7 +6,6 @@ import {
   MiniMap,
   BackgroundVariant,
   type NodeMouseHandler,
-  type OnNodeDrag,
   type ReactFlowInstance,
 } from '@xyflow/react';
 import type { WorkflowNode, WorkflowEdge } from '../../types/workflow.types';
@@ -17,6 +16,7 @@ import { ApprovalNode } from './CustomNodes/ApprovalNode';
 import { AutomatedStepNode } from './CustomNodes/AutomatedStepNode';
 import { EndNode } from './CustomNodes/EndNode';
 import type { NodeChange, EdgeChange, Connection } from '@xyflow/react';
+import { takeDraggedNodeType } from '../../utils/dragState';
 
 const nodeTypes = {
   start: StartNode,
@@ -38,9 +38,6 @@ interface WorkflowCanvasProps {
   onDeleteNode: (id: string) => void;
 }
 
-// Track the currently dragged node type from the sidebar
-let _draggedNodeType: NodeType | null = null;
-export function setDraggedNodeType(t: NodeType | null) { _draggedNodeType = t; }
 
 export function WorkflowCanvas({
   nodes,
@@ -53,7 +50,7 @@ export function WorkflowCanvas({
   onAddNode,
   onDeleteNode,
 }: WorkflowCanvasProps) {
-  const rfInstance = useRef<ReactFlowInstance | null>(null);
+  const rfInstance = useRef<ReactFlowInstance<WorkflowNode, WorkflowEdge> | null>(null);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_evt, node) => {
@@ -70,7 +67,7 @@ export function WorkflowCanvas({
   const onDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
-      const type = _draggedNodeType;
+      const type = takeDraggedNodeType();
       if (!type || !rfInstance.current) return;
       const bounds = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
       const position = rfInstance.current.screenToFlowPosition({
@@ -78,7 +75,6 @@ export function WorkflowCanvas({
         y: event.clientY - bounds.top,
       });
       onAddNode(type, position);
-      _draggedNodeType = null;
     },
     [onAddNode]
   );

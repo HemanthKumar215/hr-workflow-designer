@@ -1,7 +1,7 @@
 import { ReactFlowProvider } from '@xyflow/react';
 import { useWorkflowState } from './hooks/useWorkflowState';
 import { NodeSidebar } from './components/Canvas/NodeSidebar';
-import { WorkflowCanvas, setDraggedNodeType } from './components/Canvas/WorkflowCanvas';
+import { WorkflowCanvas } from './components/Canvas/WorkflowCanvas';
 import { NodeFormPanel } from './components/NodeForms/NodeFormPanel';
 import { WorkflowSimulator } from './components/Sandbox/WorkflowSimulator';
 import type { NodeType } from './types/node.types';
@@ -21,10 +21,6 @@ export default function App() {
 
   const handleAddNode = (type: NodeType, position: { x: number; y: number }) => {
     addNode(type, position);
-  };
-
-  const handleSidebarDragStart = (type: NodeType) => {
-    canvasSetDrag(type);
   };
 
   return (
