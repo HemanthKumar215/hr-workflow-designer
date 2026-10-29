@@ -1,0 +1,35 @@
+# Runs PostgreSQL + the FastAPI backend.
+#   docker compose up --build
+# Then start the frontend with VITE_API_URL=http://localhost:8000 npm run dev
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hr
+      POSTGRES_PASSWORD: hr
+      POSTGRES_DB: hr_workflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hr -d hr_workflow"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://hr:hr@db:5432/hr_workflow
+      JWT_SECRET: ${JWT_SECRET:-local-docker-secret-change-me-0123456789}
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      SEED_DEMO_DATA: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
